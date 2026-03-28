@@ -516,6 +516,11 @@
     background: rgba(0,0,0,0.9);
     transform: scale(1.05);
 }
+
+video {
+    -webkit-playsinline: true;
+    playsinline: true;
+}
   </style>
 </head>
 
@@ -597,448 +602,471 @@
   </footer>
 
   <script>
+      // ---------- VIDEO HANDLER (FIXED WITH TOGGLE) ----------
+    const video = document.getElementById('movieTrailer');
+    const unmuteBtn = document.getElementById('unmuteBtn');
 
-const unmuteBtn = document.getElementById('unmuteBtn');
+    // Start muted (this works on mobile)
+    video.muted = true;
+    video.play().catch(e => console.log('Autoplay prevented, waiting for interaction'));
 
-unmuteBtn.addEventListener('click', () => {
-    video.muted = false;
-    video.volume = 0.7; // 70% volume
-    unmuteBtn.innerHTML = '🔊 Mute';
-    unmuteBtn.style.background = 'rgba(255,107,139,0.8)';
-    
-    // Optional: toggle mute on second click
-    unmuteBtn.onclick = () => {
-        video.muted = !video.muted;
-        unmuteBtn.innerHTML = video.muted ? '🔇 Unmute' : '🔊 Mute';
-    };
-});
+    let userInteracted = false;
+
+    // Function to toggle mute/unmute
+    function toggleSound() {
+        if (!userInteracted) {
+            // First interaction - unmute
+            userInteracted = true;
+            video.muted = false;
+            video.volume = 0.7;
+            
+            // Re-trigger play after unmuting
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // If it fails, keep muted
+                    video.muted = true;
+                    userInteracted = false;
+                    unmuteBtn.innerHTML = '🔇 Unmute';
+                });
+            }
+            unmuteBtn.innerHTML = '🔊 Mute';
+        } else {
+            // Toggle mute/unmute
+            video.muted = !video.muted;
+            unmuteBtn.innerHTML = video.muted ? '🔇 Unmute' : '🔊 Mute';
+            
+            // If unmuting, ensure video plays
+            if (!video.muted) {
+                video.play().catch(e => console.log('Play failed:', e));
+            }
+        }
+    }
+
+    // Set the click handler
+    unmuteBtn.onclick = toggleSound;
+
+    // Handle case where video gets stuck
+    video.addEventListener('pause', () => {
+        if (!video.muted && !video.ended && userInteracted) {
+            setTimeout(() => video.play(), 100);
+        }
+    });
     // ---------- STORAGE ----------
     const STORAGE_KEY = "rea_cinema_answer";
     let currentAnswer = null;
-
-    // ---------- VIDEO HANDLER ----------
-    const video = document.getElementById('movieTrailer');
-    video.play().catch(e => console.log('Video autoplay prevented'));
 
     // ---------- STICKMAN HEAD ----------
     const canvas = document.getElementById('stickmanCanvas');
     let ctx = canvas.getContext('2d');
 
     function drawStickmanHead(mood) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const centerX = 50, centerY = 50;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const centerX = 50, centerY = 50;
 
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, 32, 0, Math.PI * 2);
-      ctx.strokeStyle = "#ffb347";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.fillStyle = "#fff5e6";
-      ctx.fill();
-
-      ctx.fillStyle = "#5a3e2e";
-      if (mood === "happy") {
         ctx.beginPath();
-        ctx.arc(38, 44, 4, 0, Math.PI * 2);
-        ctx.arc(62, 44, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "white";
-        ctx.beginPath();
-        ctx.arc(36, 42, 1.5, 0, Math.PI * 2);
-        ctx.arc(60, 42, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(50, 62, 12, 0.1, Math.PI - 0.1);
-        ctx.strokeStyle = "#ff8aa2";
+        ctx.arc(centerX, centerY, 32, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ffb347";
         ctx.lineWidth = 2.5;
         ctx.stroke();
-      } else {
-        ctx.fillRect(36, 44, 6, 4);
-        ctx.fillRect(58, 44, 6, 4);
-        ctx.beginPath();
-        ctx.arc(50, 66, 12, Math.PI + 0.15, Math.PI * 2 - 0.15, true);
-        ctx.strokeStyle = "#8a6e7a";
-        ctx.stroke();
-        ctx.fillStyle = "#88aaff";
-        ctx.beginPath();
-        ctx.moveTo(70, 48);
-        ctx.quadraticCurveTo(82, 58, 70, 68);
+        ctx.fillStyle = "#fff5e6";
         ctx.fill();
-        ctx.fillStyle = "#aaccff";
+
+        ctx.fillStyle = "#5a3e2e";
+        if (mood === "happy") {
+            ctx.beginPath();
+            ctx.arc(38, 44, 4, 0, Math.PI * 2);
+            ctx.arc(62, 44, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "white";
+            ctx.beginPath();
+            ctx.arc(36, 42, 1.5, 0, Math.PI * 2);
+            ctx.arc(60, 42, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(50, 62, 12, 0.1, Math.PI - 0.1);
+            ctx.strokeStyle = "#ff8aa2";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+        } else {
+            ctx.fillRect(36, 44, 6, 4);
+            ctx.fillRect(58, 44, 6, 4);
+            ctx.beginPath();
+            ctx.arc(50, 66, 12, Math.PI + 0.15, Math.PI * 2 - 0.15, true);
+            ctx.strokeStyle = "#8a6e7a";
+            ctx.stroke();
+            ctx.fillStyle = "#88aaff";
+            ctx.beginPath();
+            ctx.moveTo(70, 48);
+            ctx.quadraticCurveTo(82, 58, 70, 68);
+            ctx.fill();
+            ctx.fillStyle = "#aaccff";
+            ctx.beginPath();
+            ctx.moveTo(72, 52);
+            ctx.quadraticCurveTo(80, 60, 72, 68);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = "#ffb7c5";
         ctx.beginPath();
-        ctx.moveTo(72, 52);
-        ctx.quadraticCurveTo(80, 60, 72, 68);
+        ctx.ellipse(30, 58, 5, 3, 0, 0, Math.PI * 2);
         ctx.fill();
-      }
+        ctx.beginPath();
+        ctx.ellipse(70, 58, 5, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.fillStyle = "#ffb7c5";
-      ctx.beginPath();
-      ctx.ellipse(30, 58, 5, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(70, 58, 5, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#b87c4f";
-      ctx.beginPath();
-      ctx.moveTo(45, 22);
-      ctx.quadraticCurveTo(50, 14, 55, 22);
-      ctx.fill();
+        ctx.fillStyle = "#b87c4f";
+        ctx.beginPath();
+        ctx.moveTo(45, 22);
+        ctx.quadraticCurveTo(50, 14, 55, 22);
+        ctx.fill();
     }
 
     function updateStickmanMood(mood) {
-      drawStickmanHead(mood);
+        drawStickmanHead(mood);
     }
 
     // ---------- FLOATING ITEMS ----------
     function createFloatingItems() {
-      const container = document.getElementById('movieBg');
-      const items = ['🍿', '🎬', '🎟️', '🥤', '🍫', '🎞️', '📽️', '🍿', '✨', '🎭'];
-      for (let i = 0; i < 50; i++) {
-        const el = document.createElement('div');
-        el.classList.add('movie-float');
-        el.innerText = items[Math.floor(Math.random() * items.length)];
-        el.style.left = Math.random() * 100 + '%';
-        el.style.fontSize = (Math.random() * 28 + 18) + 'px';
-        el.style.animationDuration = Math.random() * 15 + 10 + 's';
-        el.style.animationDelay = Math.random() * 10 + 's';
-        el.style.opacity = Math.random() * 0.4 + 0.2;
-        container.appendChild(el);
-      }
+        const container = document.getElementById('movieBg');
+        const items = ['🍿', '🎬', '🎟️', '🥤', '🍫', '🎞️', '📽️', '🍿', '✨', '🎭'];
+        for (let i = 0; i < 50; i++) {
+            const el = document.createElement('div');
+            el.classList.add('movie-float');
+            el.innerText = items[Math.floor(Math.random() * items.length)];
+            el.style.left = Math.random() * 100 + '%';
+            el.style.fontSize = (Math.random() * 28 + 18) + 'px';
+            el.style.animationDuration = Math.random() * 15 + 10 + 's';
+            el.style.animationDelay = Math.random() * 10 + 's';
+            el.style.opacity = Math.random() * 0.4 + 0.2;
+            container.appendChild(el);
+        }
     }
 
     // ---------- PERSISTENT ANSWER ----------
     function saveDecision(decision, eventObj) {
-      if (currentAnswer !== null) {
-        showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
-        return false;
-      }
-      currentAnswer = decision;
-      localStorage.setItem(STORAGE_KEY, decision);
-      displayPersistentAnswer();
+        if (currentAnswer !== null) {
+            showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+            return false;
+        }
+        currentAnswer = decision;
+        localStorage.setItem(STORAGE_KEY, decision);
+        displayPersistentAnswer();
 
-      if (decision === 'yes') {
-        canvasConfetti({ particleCount: 350, spread: 110, origin: { y: 0.6 }, startVelocity: 28, colors: ['#ff6b8b', '#ffd966', '#ffb347'] });
-        canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.2 } });
-        canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.8 } });
-        setTimeout(() => canvasConfetti({ particleCount: 450, spread: 90, origin: { y: 0.5 } }), 150);
+        if (decision === 'yes') {
+            canvasConfetti({ particleCount: 350, spread: 110, origin: { y: 0.6 }, startVelocity: 28, colors: ['#ff6b8b', '#ffd966', '#ffb347'] });
+            canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.2 } });
+            canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.8 } });
+            setTimeout(() => canvasConfetti({ particleCount: 450, spread: 90, origin: { y: 0.5 } }), 150);
 
-        updateStickmanMood("happy");
-        document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
-        showToast("🎬 YES! Sunday 6pm it is! Can't wait! 🎬");
+            updateStickmanMood("happy");
+            document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
+            showToast("🎬 YES! Sunday 6pm it is! Can't wait! 🎬");
 
-        const checkbox = document.getElementById('dropCheckbox');
-        checkbox.innerHTML = '✅💖';
-        checkbox.style.background = '#ff8aa2';
-        checkbox.style.color = 'white';
-        checkbox.style.transform = 'scale(1.1)';
-        setTimeout(() => { checkbox.style.transform = 'scale(1)'; }, 200);
-      } else {
-        updateStickmanMood("sad");
-        document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
-        canvasConfetti({ particleCount: 60, spread: 45, origin: { y: 0.5 }, colors: ['#88aaff'], startVelocity: 8 });
-        showToast("🌙 okay, the invitation is always open for another Sunday ✨");
+            const checkbox = document.getElementById('dropCheckbox');
+            checkbox.innerHTML = '✅💖';
+            checkbox.style.background = '#ff8aa2';
+            checkbox.style.color = 'white';
+            checkbox.style.transform = 'scale(1.1)';
+            setTimeout(() => { checkbox.style.transform = 'scale(1)'; }, 200);
+        } else {
+            updateStickmanMood("sad");
+            document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
+            canvasConfetti({ particleCount: 60, spread: 45, origin: { y: 0.5 }, colors: ['#88aaff'], startVelocity: 8 });
+            showToast("🌙 okay, the invitation is always open for another Sunday ✨");
 
-        const checkbox = document.getElementById('dropCheckbox');
-        checkbox.innerHTML = '🌙💔';
-        checkbox.style.background = '#d4c4c9';
-      }
+            const checkbox = document.getElementById('dropCheckbox');
+            checkbox.innerHTML = '🌙💔';
+            checkbox.style.background = '#d4c4c9';
+        }
 
-      if (eventObj && eventObj.clientX) createSpark(eventObj);
-      return true;
+        if (eventObj && eventObj.clientX) createSpark(eventObj);
+        return true;
     }
 
     function displayPersistentAnswer() {
-      const answerDiv = document.getElementById('persistentAnswer');
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const checkbox = document.getElementById('dropCheckbox');
+        const answerDiv = document.getElementById('persistentAnswer');
+        const stored = localStorage.getItem(STORAGE_KEY);
+        const checkbox = document.getElementById('dropCheckbox');
 
-      if (stored === 'yes') {
-        currentAnswer = 'yes';
-        answerDiv.innerHTML = `💖✨ SHE SAID YES! Cinema outing is happening! ✨💖<br><span style="font-size:0.8rem;">🎟️🍿 Sunday 6pm! popcorn ready! can't wait to hang out 🎬🥤</span>`;
-        updateStickmanMood("happy");
-        document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
-        checkbox.innerHTML = '✅💖';
-        checkbox.style.background = '#ff8aa2';
-        checkbox.style.color = 'white';
-      } else if (stored === 'no') {
-        currentAnswer = 'no';
-        answerDiv.innerHTML = `🌙 maybe another time 🌙<br><span style="font-size:0.8rem;">the invitation is always open, Rea ✨💕</span>`;
-        updateStickmanMood("sad");
-        document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
-        checkbox.innerHTML = '🌙💔';
-        checkbox.style.background = '#d4c4c9';
-      } else {
-        currentAnswer = null;
-        answerDiv.innerHTML = `💭 waiting for your answer... drag & drop your choice 💭`;
-        updateStickmanMood("happy");
-        document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
-        checkbox.innerHTML = '🎬';
-        checkbox.style.background = 'white';
-        checkbox.style.color = '#b14b5c';
-      }
+        if (stored === 'yes') {
+            currentAnswer = 'yes';
+            answerDiv.innerHTML = `💖✨ SHE SAID YES! Cinema outing is happening! ✨💖<br><span style="font-size:0.8rem;">🎟️🍿 Sunday 6pm! popcorn ready! can't wait to hang out 🎬🥤</span>`;
+            updateStickmanMood("happy");
+            document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
+            checkbox.innerHTML = '✅💖';
+            checkbox.style.background = '#ff8aa2';
+            checkbox.style.color = 'white';
+        } else if (stored === 'no') {
+            currentAnswer = 'no';
+            answerDiv.innerHTML = `🌙 maybe another time 🌙<br><span style="font-size:0.8rem;">the invitation is always open, Rea ✨💕</span>`;
+            updateStickmanMood("sad");
+            document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
+            checkbox.innerHTML = '🌙💔';
+            checkbox.style.background = '#d4c4c9';
+        } else {
+            currentAnswer = null;
+            answerDiv.innerHTML = `💭 waiting for your answer... drag & drop your choice 💭`;
+            updateStickmanMood("happy");
+            document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
+            checkbox.innerHTML = '🎬';
+            checkbox.style.background = 'white';
+            checkbox.style.color = '#b14b5c';
+        }
     }
 
     function resetDecision() {
-      localStorage.removeItem(STORAGE_KEY);
-      currentAnswer = null;
-      displayPersistentAnswer();
-      updateStickmanMood("happy");
-      document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
-      showToast("✨ answer reset! you can choose again ✨");
-      canvasConfetti({ particleCount: 70, spread: 55, origin: { y: 0.8 }, colors: ['#ffd966'] });
+        localStorage.removeItem(STORAGE_KEY);
+        currentAnswer = null;
+        displayPersistentAnswer();
+        updateStickmanMood("happy");
+        document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
+        showToast("✨ answer reset! you can choose again ✨");
+        canvasConfetti({ particleCount: 70, spread: 55, origin: { y: 0.8 }, colors: ['#ffd966'] });
     }
 
     // ---------- DRAG AND DROP WITH FULL DROP ZONE SUPPORT ----------
     function setupDragDrop() {
-      const dragYes = document.getElementById('dragYes');
-      const dragNo = document.getElementById('dragNo');
-      const dropZone = document.getElementById('dropZone');
+        const dragYes = document.getElementById('dragYes');
+        const dragNo = document.getElementById('dragNo');
+        const dropZone = document.getElementById('dropZone');
 
-      // Desktop drag events
-      dragYes.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', 'yes');
-        e.dataTransfer.effectAllowed = 'copy';
-        dragYes.classList.add('dragging');
-        gsap.to(dragYes, { scale: 0.95, duration: 0.1 });
-      });
-
-      dragNo.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('text/plain', 'no');
-        e.dataTransfer.effectAllowed = 'copy';
-        dragNo.classList.add('dragging');
-        gsap.to(dragNo, { scale: 0.95, duration: 0.1 });
-      });
-
-      dragYes.addEventListener('dragend', () => {
-        dragYes.classList.remove('dragging');
-        gsap.to(dragYes, { scale: 1, duration: 0.2 });
-      });
-
-      dragNo.addEventListener('dragend', () => {
-        dragNo.classList.remove('dragging');
-        gsap.to(dragNo, { scale: 1, duration: 0.2 });
-      });
-
-      // Make the ENTIRE drop zone receptive (including inner box)
-      dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.add('drag-over');
-        gsap.to(dropZone, { scale: 1.02, duration: 0.1 });
-      });
-
-      dropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        gsap.to(dropZone, { scale: 1, duration: 0.1 });
-      });
-
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropZone.classList.remove('drag-over');
-        const choice = e.dataTransfer.getData('text/plain');
-        if (currentAnswer !== null) {
-          showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
-          return;
-        }
-        if (choice === 'yes') {
-          gsap.to(dropZone, {
-            scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
-              saveDecision('yes', { clientX: e.clientX, clientY: e.clientY });
-            }
-          });
-        } else if (choice === 'no') {
-          gsap.to(dropZone, {
-            scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
-              saveDecision('no', { clientX: e.clientX, clientY: e.clientY });
-            }
-          });
-        }
-      });
-
-      // MOBILE: Enhanced touch drag with clone and full drop zone detection
-      let draggedItem = null;
-      let cloneElement = null;
-      let startX, startY;
-      const dragCards = [dragYes, dragNo];
-
-      dragCards.forEach(card => {
-        card.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          draggedItem = card;
-          const touch = e.touches[0];
-          startX = touch.clientX;
-          startY = touch.clientY;
-          card.classList.add('dragging');
-
-          // Create a visual clone that follows the finger
-          cloneElement = card.cloneNode(true);
-          cloneElement.classList.add('drag-clone');
-          cloneElement.style.position = 'fixed';
-          cloneElement.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
-          cloneElement.style.top = (touch.clientY - card.offsetHeight / 2) + 'px';
-          cloneElement.style.width = card.offsetWidth + 'px';
-          cloneElement.style.opacity = '0.9';
-          cloneElement.style.pointerEvents = 'none';
-          document.body.appendChild(cloneElement);
-
-          gsap.to(card, { scale: 0.9, duration: 0.1 });
+        // Desktop drag events
+        dragYes.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', 'yes');
+            e.dataTransfer.effectAllowed = 'copy';
+            dragYes.classList.add('dragging');
+            gsap.to(dragYes, { scale: 0.95, duration: 0.1 });
         });
 
-        card.addEventListener('touchmove', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!draggedItem) return;
-          const touch = e.touches[0];
+        dragNo.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', 'no');
+            e.dataTransfer.effectAllowed = 'copy';
+            dragNo.classList.add('dragging');
+            gsap.to(dragNo, { scale: 0.95, duration: 0.1 });
+        });
 
-          // Move clone with finger
-          if (cloneElement) {
-            cloneElement.style.left = (touch.clientX - cloneElement.offsetWidth / 2) + 'px';
-            cloneElement.style.top = (touch.clientY - cloneElement.offsetHeight / 2) + 'px';
-          }
+        dragYes.addEventListener('dragend', () => {
+            dragYes.classList.remove('dragging');
+            gsap.to(dragYes, { scale: 1, duration: 0.2 });
+        });
 
-          // Check if over drop zone (using document.elementFromPoint for the entire drop zone)
-          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-          let isOverDropZone = false;
-          let currentElem = elemBelow;
-          while (currentElem) {
-            if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
-              isOverDropZone = true;
-              break;
-            }
-            currentElem = currentElem.parentElement;
-          }
+        dragNo.addEventListener('dragend', () => {
+            dragNo.classList.remove('dragging');
+            gsap.to(dragNo, { scale: 1, duration: 0.2 });
+        });
 
-          if (isOverDropZone) {
+        // Make the ENTIRE drop zone receptive
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             dropZone.classList.add('drag-over');
             gsap.to(dropZone, { scale: 1.02, duration: 0.1 });
-          } else {
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
             dropZone.classList.remove('drag-over');
             gsap.to(dropZone, { scale: 1, duration: 0.1 });
-          }
         });
 
-        card.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!draggedItem) return;
-
-          const touch = e.changedTouches[0];
-          draggedItem.classList.remove('dragging');
-          gsap.to(draggedItem, { scale: 1, duration: 0.2 });
-
-          // Remove clone
-          if (cloneElement) {
-            cloneElement.remove();
-            cloneElement = null;
-          }
-
-          // Check if drop happened on drop zone (entire area)
-          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-          let isOverDropZone = false;
-          let currentElem = elemBelow;
-          while (currentElem) {
-            if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
-              isOverDropZone = true;
-              break;
-            }
-            currentElem = currentElem.parentElement;
-          }
-
-          if (isOverDropZone) {
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+            const choice = e.dataTransfer.getData('text/plain');
             if (currentAnswer !== null) {
-              showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
-            } else {
-              const choice = draggedItem.getAttribute('data-choice');
-              gsap.to(dropZone, {
-                scale: 1.1, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
-                  if (choice === 'yes') {
-                    saveDecision('yes', { clientX: touch.clientX, clientY: touch.clientY });
-                  } else if (choice === 'no') {
-                    saveDecision('no', { clientX: touch.clientX, clientY: touch.clientY });
-                  }
-                }
-              });
+                showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+                return;
             }
-          }
-
-          dropZone.classList.remove('drag-over');
-          gsap.to(dropZone, { scale: 1, duration: 0.1 });
-          draggedItem = null;
+            if (choice === 'yes') {
+                gsap.to(dropZone, {
+                    scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+                        saveDecision('yes', { clientX: e.clientX, clientY: e.clientY });
+                    }
+                });
+            } else if (choice === 'no') {
+                gsap.to(dropZone, {
+                    scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+                        saveDecision('no', { clientX: e.clientX, clientY: e.clientY });
+                    }
+                });
+            }
         });
-      });
 
-      // Click on drop zone as alternative (works on both desktop and mobile)
-      dropZone.addEventListener('click', (e) => {
-        if (currentAnswer !== null) {
-          showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
-          return;
-        }
-        gsap.to(dropZone, { scale: 1.05, duration: 0.1, yoyo: true, repeat: 1 });
-        const bubble = document.createElement('div');
-        bubble.innerHTML = `
+        // MOBILE: Enhanced touch drag
+        let draggedItem = null;
+        let cloneElement = null;
+        const dragCards = [dragYes, dragNo];
+
+        dragCards.forEach(card => {
+            card.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                draggedItem = card;
+                const touch = e.touches[0];
+                card.classList.add('dragging');
+
+                cloneElement = card.cloneNode(true);
+                cloneElement.classList.add('drag-clone');
+                cloneElement.style.position = 'fixed';
+                cloneElement.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
+                cloneElement.style.top = (touch.clientY - card.offsetHeight / 2) + 'px';
+                cloneElement.style.width = card.offsetWidth + 'px';
+                cloneElement.style.opacity = '0.9';
+                cloneElement.style.pointerEvents = 'none';
+                document.body.appendChild(cloneElement);
+
+                gsap.to(card, { scale: 0.9, duration: 0.1 });
+            });
+
+            card.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!draggedItem) return;
+                const touch = e.touches[0];
+
+                if (cloneElement) {
+                    cloneElement.style.left = (touch.clientX - cloneElement.offsetWidth / 2) + 'px';
+                    cloneElement.style.top = (touch.clientY - cloneElement.offsetHeight / 2) + 'px';
+                }
+
+                const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                let isOverDropZone = false;
+                let currentElem = elemBelow;
+                while (currentElem) {
+                    if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
+                        isOverDropZone = true;
+                        break;
+                    }
+                    currentElem = currentElem.parentElement;
+                }
+
+                if (isOverDropZone) {
+                    dropZone.classList.add('drag-over');
+                    gsap.to(dropZone, { scale: 1.02, duration: 0.1 });
+                } else {
+                    dropZone.classList.remove('drag-over');
+                    gsap.to(dropZone, { scale: 1, duration: 0.1 });
+                }
+            });
+
+            card.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!draggedItem) return;
+
+                const touch = e.changedTouches[0];
+                draggedItem.classList.remove('dragging');
+                gsap.to(draggedItem, { scale: 1, duration: 0.2 });
+
+                if (cloneElement) {
+                    cloneElement.remove();
+                    cloneElement = null;
+                }
+
+                const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+                let isOverDropZone = false;
+                let currentElem = elemBelow;
+                while (currentElem) {
+                    if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
+                        isOverDropZone = true;
+                        break;
+                    }
+                    currentElem = currentElem.parentElement;
+                }
+
+                if (isOverDropZone) {
+                    if (currentAnswer !== null) {
+                        showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+                    } else {
+                        const choice = draggedItem.getAttribute('data-choice');
+                        gsap.to(dropZone, {
+                            scale: 1.1, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+                                if (choice === 'yes') {
+                                    saveDecision('yes', { clientX: touch.clientX, clientY: touch.clientY });
+                                } else if (choice === 'no') {
+                                    saveDecision('no', { clientX: touch.clientX, clientY: touch.clientY });
+                                }
+                            }
+                        });
+                    }
+                }
+
+                dropZone.classList.remove('drag-over');
+                gsap.to(dropZone, { scale: 1, duration: 0.1 });
+                draggedItem = null;
+            });
+        });
+
+        // Click on drop zone as alternative
+        dropZone.addEventListener('click', (e) => {
+            if (currentAnswer !== null) {
+                showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+                return;
+            }
+            gsap.to(dropZone, { scale: 1.05, duration: 0.1, yoyo: true, repeat: 1 });
+            const bubble = document.createElement('div');
+            bubble.innerHTML = `
                 <div style="background: white; border-radius: 2rem; padding: 1.2rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
                     <p style="margin-bottom: 1rem; color: #b14b5c;">🍿 cinema outing with me? Sunday 6pm 🍿</p>
                     <button id="popupYes" style="background:#ff8aa2; border:none; padding:0.5rem 1.5rem; border-radius:2rem; margin:0.3rem; color:white; font-weight:bold; cursor:pointer;">💖 YES</button>
                     <button id="popupNo" style="background:#e9dfe2; border:none; padding:0.5rem 1.5rem; border-radius:2rem; margin:0.3rem; cursor:pointer;">🌙 maybe</button>
                 </div>
             `;
-        bubble.style.position = 'fixed';
-        bubble.style.bottom = '30%';
-        bubble.style.left = '50%';
-        bubble.style.transform = 'translateX(-50%)';
-        bubble.style.zIndex = '10000';
-        document.body.appendChild(bubble);
+            bubble.style.position = 'fixed';
+            bubble.style.bottom = '30%';
+            bubble.style.left = '50%';
+            bubble.style.transform = 'translateX(-50%)';
+            bubble.style.zIndex = '10000';
+            document.body.appendChild(bubble);
 
-        document.getElementById('popupYes').onclick = () => {
-          saveDecision('yes', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
-          bubble.remove();
-        };
-        document.getElementById('popupNo').onclick = () => {
-          saveDecision('no', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
-          bubble.remove();
-        };
-        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 8000);
-      });
+            document.getElementById('popupYes').onclick = () => {
+                saveDecision('yes', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+                bubble.remove();
+            };
+            document.getElementById('popupNo').onclick = () => {
+                saveDecision('no', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+                bubble.remove();
+            };
+            setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 8000);
+        });
     }
 
     // ---------- HELPER FUNCTIONS ----------
     function showToast(msg) {
-      let toast = document.createElement('div');
-      toast.innerText = msg;
-      toast.style.position = 'fixed';
-      toast.style.bottom = '100px';
-      toast.style.left = '50%';
-      toast.style.transform = 'translateX(-50%)';
-      toast.style.backgroundColor = '#ffecf0';
-      toast.style.color = '#b85c70';
-      toast.style.padding = '10px 24px';
-      toast.style.borderRadius = '50px';
-      toast.style.fontSize = '0.85rem';
-      toast.style.fontWeight = '500';
-      toast.style.zIndex = '9999';
-      toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 2200);
+        let toast = document.createElement('div');
+        toast.innerText = msg;
+        toast.style.position = 'fixed';
+        toast.style.bottom = '100px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.backgroundColor = '#ffecf0';
+        toast.style.color = '#b85c70';
+        toast.style.padding = '10px 24px';
+        toast.style.borderRadius = '50px';
+        toast.style.fontSize = '0.85rem';
+        toast.style.fontWeight = '500';
+        toast.style.zIndex = '9999';
+        toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2200);
     }
 
     function createSpark(e) {
-      let spark = document.createElement('div');
-      spark.style.position = 'fixed';
-      spark.style.left = e.clientX + 'px';
-      spark.style.top = e.clientY + 'px';
-      spark.style.width = '12px';
-      spark.style.height = '12px';
-      spark.style.background = 'radial-gradient(circle, #ffb347, #ff6b8b)';
-      spark.style.borderRadius = '50%';
-      spark.style.pointerEvents = 'none';
-      spark.style.zIndex = '9999';
-      spark.style.animation = 'sparkFade 0.5s forwards';
-      document.body.appendChild(spark);
-      setTimeout(() => spark.remove(), 500);
+        let spark = document.createElement('div');
+        spark.style.position = 'fixed';
+        spark.style.left = e.clientX + 'px';
+        spark.style.top = e.clientY + 'px';
+        spark.style.width = '12px';
+        spark.style.height = '12px';
+        spark.style.background = 'radial-gradient(circle, #ffb347, #ff6b8b)';
+        spark.style.borderRadius = '50%';
+        spark.style.pointerEvents = 'none';
+        spark.style.zIndex = '9999';
+        spark.style.animation = 'sparkFade 0.5s forwards';
+        document.body.appendChild(spark);
+        setTimeout(() => spark.remove(), 500);
     }
 
     const styleSpark = document.createElement('style');
@@ -1048,22 +1076,22 @@ unmuteBtn.addEventListener('click', () => {
     // ---------- SCROLL ANIMATION ----------
     gsap.registerPlugin(ScrollTrigger);
     function initScrollAnimations() {
-      gsap.from(".question-card", {
-        scrollTrigger: { trigger: ".question-section", start: "top 80%" },
-        opacity: 0,
-        y: 50,
-        duration: 0.8
-      });
-      gsap.from(".drag-drop-area", {
-        scrollTrigger: { trigger: ".question-section", start: "top 70%" },
-        scale: 0.95,
-        duration: 0.6
-      });
+        gsap.from(".question-card", {
+            scrollTrigger: { trigger: ".question-section", start: "top 80%" },
+            opacity: 0,
+            y: 50,
+            duration: 0.8
+        });
+        gsap.from(".drag-drop-area", {
+            scrollTrigger: { trigger: ".question-section", start: "top 70%" },
+            scale: 0.95,
+            duration: 0.6
+        });
     }
 
     // ---------- EVENT LISTENERS ----------
     document.getElementById('scrollIndicator').addEventListener('click', () => {
-      document.getElementById('questionSection').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('questionSection').scrollIntoView({ behavior: 'smooth' });
     });
     document.getElementById('resetButton').addEventListener('click', resetDecision);
 
@@ -1073,7 +1101,7 @@ unmuteBtn.addEventListener('click', () => {
     displayPersistentAnswer();
     setupDragDrop();
     initScrollAnimations();
-  </script>
+</script>
 </body>
 
 </html>
