@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Rea · Cinema Outing? 🎬</title>
+  <!-- canvas confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+  <!-- GSAP for animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0a0a1a;
+      overflow-x: hidden;
+    }
+
+    /* floating popcorn and movie elements background */
+    .movie-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .movie-float {
+      position: absolute;
+      font-size: 2rem;
+      animation: floatMovie 20s infinite ease-in-out;
+      opacity: 0.3;
+    }
+
+    @keyframes floatMovie {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 0.4;
+      }
+
+      80% {
+        opacity: 0.4;
+      }
+
+      100% {
+        transform: translateY(-20vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* hero section */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    /* diagonal split with SINGLE blended gradient line */
+    .split-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+    }
+
+    /* left side - video trailer */
+    .trailer-side {
+      position: relative;
+      width: 50%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      clip-path: polygon(0 0, 100% 0, 92% 100%, 0% 100%);
+    }
+
+    .video-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #1a0a1a;
+    }
+
+    .video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* SINGLE blended gradient overlay at diagonal intersection */
+    .blend-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(115deg,
+          transparent 0%,
+          rgba(255, 182, 193, 0.15) 45%,
+          rgba(255, 215, 0, 0.2) 50%,
+          rgba(255, 182, 193, 0.15) 55%,
+          transparent 100%);
+      pointer-events: none;
+      z-index: 2;
+      mix-blend-mode: soft-light;
+    }
+
+    /* right side - pink/gold section */
+    .info-side {
+      position: relative;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(135deg, #ffb7c5 0%, #ff9eb0 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+      box-shadow: -5px 0 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .title-container {
+      text-align: center;
+      animation: fadeInUp 1s ease;
+    }
+
+    .title-container h1 {
+      font-size: 4.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #ffd966);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #fff;
+      margin-top: 0.5rem;
+      font-weight: 500;
+    }
+
+    .movie-time {
+      font-size: 1rem;
+      color: #ffd966;
+      margin-top: 0.3rem;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.2);
+      display: inline-block;
+      padding: 0.2rem 1rem;
+      border-radius: 30px;
+      backdrop-filter: blur(4px);
+    }
+
+    .cinema-badge {
+      margin-top: 1rem;
+      font-size: 2rem;
+      letter-spacing: 8px;
+    }
+
+    .gold-divider {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, #ffd966, #ffb347);
+      margin: 1rem auto;
+      border-radius: 3px;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: white;
+      font-size: 0.8rem;
+      animation: bounce 2s infinite;
+      cursor: pointer;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 30px;
+      backdrop-filter: blur(5px);
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      50% {
+        transform: translateX(-50%) translateY(10px);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* question section */
+    .question-section {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #fff5f8 0%, #ffeef4 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .question-card {
+      max-width: 700px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-radius: 2.5rem;
+      padding: 2rem;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(255, 105, 130, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+    }
+
+    .question-text {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #b14b5c;
+      margin-bottom: 1rem;
+    }
+
+    .cinema-detail {
+      background: linear-gradient(135deg, #ffd96620, #ffb7c530);
+      border-radius: 2rem;
+      padding: 0.8rem;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #a14e62;
+    }
+
+    /* drag and drop area */
+    .drag-drop-area {
+      background: linear-gradient(135deg, #fff0f3, #ffe4ea);
+      border-radius: 2rem;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border: 2px dashed #ffb7c5;
+    }
+
+    .drag-items {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 10;
+    }
+
+    .drag-card {
+      background: white;
+      padding: 1rem 2rem;
+      border-radius: 60px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: grab;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      touch-action: none;
+      will-change: transform;
+      position: relative;
+      z-index: 100;
+    }
+
+    .drag-card:active {
+      cursor: grabbing;
+    }
+
+    .drag-card.dragging {
+      opacity: 0.7;
+      transform: scale(0.98);
+      cursor: grabbing;
+      z-index: 1000;
+    }
+
+    .drag-card[data-choice="yes"] {
+      background: linear-gradient(135deg, #ff8aa2, #ff6b8b);
+      color: white;
+    }
+
+    .drag-card[data-choice="no"] {
+      background: linear-gradient(135deg, #e9dfe2, #d4c4c9);
+      color: #a45c6e;
+    }
+
+    /* DROP ZONE - entire area is clickable/droppable */
+    .drop-zone {
+      background: rgba(255, 215, 0, 0.1);
+      border: 3px solid rgba(255, 180, 100, 0.5);
+      border-radius: 1.5rem;
+      padding: 1.2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: visible;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      z-index: 5;
+    }
+
+    .drop-zone.drag-over {
+      transform: scale(1.02);
+      border-color: #ff8aa2;
+      background: rgba(255, 215, 0, 0.3);
+      box-shadow: 0 0 25px rgba(255, 107, 139, 0.5);
+    }
+
+    .picture-box {
+      background: linear-gradient(135deg, #fff8f0, #fff0e6);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.1);
+      pointer-events: none;
+    }
+
+    .drop-label {
+      font-size: 0.9rem;
+      color: #b14b5c;
+      margin-bottom: 0.8rem;
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    .drop-checkbox {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border: 2px solid #ffd966;
+      pointer-events: none;
+    }
+
+    .picture-frame-icon {
+      font-size: 2rem;
+      margin-top: 0.5rem;
+      color: #ffb347;
+      pointer-events: none;
+    }
+
+    .drop-hint {
+      font-size: 0.7rem;
+      margin-top: 0.5rem;
+      color: #c97a8b;
+      pointer-events: none;
+    }
+
+    /* stickman head only */
+    .stickman-container {
+      margin: 1rem 0;
+      display: flex;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    canvas#stickmanCanvas {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    canvas#stickmanCanvas:hover {
+      transform: scale(1.05);
+    }
+
+    .stickman-label {
+      font-size: 0.75rem;
+      color: #c97a8b;
+      margin-top: 0.3rem;
+    }
+
+    .reset-btn {
+      background: linear-gradient(135deg, #ffd966, #ffb347);
+      color: #b14b5c;
+      font-size: 0.85rem;
+      padding: 0.6rem 1.4rem;
+      border: none;
+      border-radius: 60px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 0.5rem;
+    }
+
+    .reset-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(255, 180, 70, 0.4);
+    }
+
+    .answer-display {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      border-radius: 2rem;
+      background: linear-gradient(135deg, #ffd96620, #ffb7c530);
+      font-weight: 500;
+      color: #b14b5c;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      color: #e2a3b1;
+      font-size: 0.75rem;
+      background: #fff5f8;
+    }
+
+    /* Dragging clone for visual feedback */
+    .drag-clone {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+      transform: scale(1.05);
+      transition: transform 0.05s ease;
+    }
+
+    @media (max-width: 768px) {
+      .split-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .trailer-side {
+        width: 100%;
+        height: 50vh;
+        clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
+      }
+
+      .info-side {
+        width: 100%;
+        height: 50vh;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+      }
+
+      .title-container h1 {
+        font-size: 2.5rem;
+      }
+
+      .question-text {
+        font-size: 1.4rem;
+      }
+
+      .drag-card {
+        font-size: 1rem;
+        padding: 0.7rem 1.2rem;
+      }
+    }
+
+    .unmute-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 12px;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+}
+.unmute-button:hover {
+    background: rgba(0,0,0,0.9);
+    transform: scale(1.05);
+}
+  </style>
+</head>
+
+<body>
+
+  <!-- floating popcorn and movie items background -->
+  <div class="movie-bg" id="movieBg"></div>
+
+  <div class="hero-section">
+    <div class="split-container">
+      <div class="trailer-side">
+        <div class="video-container">
+          <video id="movieTrailer" autoplay loop muted playsinline>
+            <source src="assets/Hoppers.mp4" type="video/mp4">
+          </video>
+          <button id="unmuteBtn" class="unmute-button">🔇 Unmute</button>
+        </div>
+      </div>
+      <div class="info-side">
+        <div class="title-container">
+          <h1>Hi Rea</h1>
+          <div class="gold-divider"></div>
+          <div class="subtitle">Cinema outing? 🎬🍿</div>
+          <div class="movie-time">📅 Sunday 6pm 📅</div>
+          <div class="cinema-badge">🎟️ 🥤 🍫</div>
+        </div>
+      </div>
+      <div class="blend-overlay"></div>
+    </div>
+    <div class="scroll-indicator" id="scrollIndicator">
+      <span>✨ scroll for the invitation ✨ ↓</span>
+    </div>
+  </div>
+
+  <div class="question-section" id="questionSection">
+    <div class="question-card">
+      <div class="question-text">
+        🎬 let's go to the cinema together? 🎬
+      </div>
+      <div class="cinema-detail">
+        🍿 popcorn on me • any movie you choose • just a fun outing 🥤
+      </div>
+
+      <!-- DRAG AND DROP SECTION -->
+      <div class="drag-drop-area">
+        <div class="drag-items">
+          <div class="drag-card" data-choice="yes" draggable="true" id="dragYes">
+            💖 YES! let's go 💖
+          </div>
+          <div class="drag-card" data-choice="no" draggable="true" id="dragNo">
+            🌙 maybe another time
+          </div>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <div class="picture-box">
+            <div class="drop-label">✨ drop your answer here ✨</div>
+            <div class="drop-checkbox" id="dropCheckbox">
+              🎬
+            </div>
+            <div class="picture-frame-icon">📸 🎞️</div>
+            <div class="drop-hint">drag & drop YES or NO into this box</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- stickman head -->
+      <div class="stickman-container">
+        <canvas id="stickmanCanvas" width="100" height="100"></canvas>
+      </div>
+      <div class="stickman-label" id="signMessage">✨ drag your answer to the box ✨</div>
+
+      <div id="persistentAnswer" class="answer-display"></div>
+      <button class="reset-btn" id="resetButton">🔄 change my mind</button>
+    </div>
+  </div>
+
+  <footer>
+    ✨ answer saves on this device — drag & drop your choice ✨ Sunday 6pm ✨
+  </footer>
+
+  <script>
+
+const unmuteBtn = document.getElementById('unmuteBtn');
+
+unmuteBtn.addEventListener('click', () => {
+    video.muted = false;
+    video.volume = 0.7; // 70% volume
+    unmuteBtn.innerHTML = '🔊 Mute';
+    unmuteBtn.style.background = 'rgba(255,107,139,0.8)';
+    
+    // Optional: toggle mute on second click
+    unmuteBtn.onclick = () => {
+        video.muted = !video.muted;
+        unmuteBtn.innerHTML = video.muted ? '🔇 Unmute' : '🔊 Mute';
+    };
+});
+    // ---------- STORAGE ----------
+    const STORAGE_KEY = "rea_cinema_answer";
+    let currentAnswer = null;
+
+    // ---------- VIDEO HANDLER ----------
+    const video = document.getElementById('movieTrailer');
+    video.play().catch(e => console.log('Video autoplay prevented'));
+
+    // ---------- STICKMAN HEAD ----------
+    const canvas = document.getElementById('stickmanCanvas');
+    let ctx = canvas.getContext('2d');
+
+    function drawStickmanHead(mood) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerX = 50, centerY = 50;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 32, 0, Math.PI * 2);
+      ctx.strokeStyle = "#ffb347";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.fillStyle = "#fff5e6";
+      ctx.fill();
+
+      ctx.fillStyle = "#5a3e2e";
+      if (mood === "happy") {
+        ctx.beginPath();
+        ctx.arc(38, 44, 4, 0, Math.PI * 2);
+        ctx.arc(62, 44, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(36, 42, 1.5, 0, Math.PI * 2);
+        ctx.arc(60, 42, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(50, 62, 12, 0.1, Math.PI - 0.1);
+        ctx.strokeStyle = "#ff8aa2";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      } else {
+        ctx.fillRect(36, 44, 6, 4);
+        ctx.fillRect(58, 44, 6, 4);
+        ctx.beginPath();
+        ctx.arc(50, 66, 12, Math.PI + 0.15, Math.PI * 2 - 0.15, true);
+        ctx.strokeStyle = "#8a6e7a";
+        ctx.stroke();
+        ctx.fillStyle = "#88aaff";
+        ctx.beginPath();
+        ctx.moveTo(70, 48);
+        ctx.quadraticCurveTo(82, 58, 70, 68);
+        ctx.fill();
+        ctx.fillStyle = "#aaccff";
+        ctx.beginPath();
+        ctx.moveTo(72, 52);
+        ctx.quadraticCurveTo(80, 60, 72, 68);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "#ffb7c5";
+      ctx.beginPath();
+      ctx.ellipse(30, 58, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(70, 58, 5, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#b87c4f";
+      ctx.beginPath();
+      ctx.moveTo(45, 22);
+      ctx.quadraticCurveTo(50, 14, 55, 22);
+      ctx.fill();
+    }
+
+    function updateStickmanMood(mood) {
+      drawStickmanHead(mood);
+    }
+
+    // ---------- FLOATING ITEMS ----------
+    function createFloatingItems() {
+      const container = document.getElementById('movieBg');
+      const items = ['🍿', '🎬', '🎟️', '🥤', '🍫', '🎞️', '📽️', '🍿', '✨', '🎭'];
+      for (let i = 0; i < 50; i++) {
+        const el = document.createElement('div');
+        el.classList.add('movie-float');
+        el.innerText = items[Math.floor(Math.random() * items.length)];
+        el.style.left = Math.random() * 100 + '%';
+        el.style.fontSize = (Math.random() * 28 + 18) + 'px';
+        el.style.animationDuration = Math.random() * 15 + 10 + 's';
+        el.style.animationDelay = Math.random() * 10 + 's';
+        el.style.opacity = Math.random() * 0.4 + 0.2;
+        container.appendChild(el);
+      }
+    }
+
+    // ---------- PERSISTENT ANSWER ----------
+    function saveDecision(decision, eventObj) {
+      if (currentAnswer !== null) {
+        showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+        return false;
+      }
+      currentAnswer = decision;
+      localStorage.setItem(STORAGE_KEY, decision);
+      displayPersistentAnswer();
+
+      if (decision === 'yes') {
+        canvasConfetti({ particleCount: 350, spread: 110, origin: { y: 0.6 }, startVelocity: 28, colors: ['#ff6b8b', '#ffd966', '#ffb347'] });
+        canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.2 } });
+        canvasConfetti({ particleCount: 250, spread: 130, origin: { y: 0.4, x: 0.8 } });
+        setTimeout(() => canvasConfetti({ particleCount: 450, spread: 90, origin: { y: 0.5 } }), 150);
+
+        updateStickmanMood("happy");
+        document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
+        showToast("🎬 YES! Sunday 6pm it is! Can't wait! 🎬");
+
+        const checkbox = document.getElementById('dropCheckbox');
+        checkbox.innerHTML = '✅💖';
+        checkbox.style.background = '#ff8aa2';
+        checkbox.style.color = 'white';
+        checkbox.style.transform = 'scale(1.1)';
+        setTimeout(() => { checkbox.style.transform = 'scale(1)'; }, 200);
+      } else {
+        updateStickmanMood("sad");
+        document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
+        canvasConfetti({ particleCount: 60, spread: 45, origin: { y: 0.5 }, colors: ['#88aaff'], startVelocity: 8 });
+        showToast("🌙 okay, the invitation is always open for another Sunday ✨");
+
+        const checkbox = document.getElementById('dropCheckbox');
+        checkbox.innerHTML = '🌙💔';
+        checkbox.style.background = '#d4c4c9';
+      }
+
+      if (eventObj && eventObj.clientX) createSpark(eventObj);
+      return true;
+    }
+
+    function displayPersistentAnswer() {
+      const answerDiv = document.getElementById('persistentAnswer');
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const checkbox = document.getElementById('dropCheckbox');
+
+      if (stored === 'yes') {
+        currentAnswer = 'yes';
+        answerDiv.innerHTML = `💖✨ SHE SAID YES! Cinema outing is happening! ✨💖<br><span style="font-size:0.8rem;">🎟️🍿 Sunday 6pm! popcorn ready! can't wait to hang out 🎬🥤</span>`;
+        updateStickmanMood("happy");
+        document.getElementById('signMessage').innerHTML = "🎉 YAY! Cinema outing locked! 🎉🍿";
+        checkbox.innerHTML = '✅💖';
+        checkbox.style.background = '#ff8aa2';
+        checkbox.style.color = 'white';
+      } else if (stored === 'no') {
+        currentAnswer = 'no';
+        answerDiv.innerHTML = `🌙 maybe another time 🌙<br><span style="font-size:0.8rem;">the invitation is always open, Rea ✨💕</span>`;
+        updateStickmanMood("sad");
+        document.getElementById('signMessage').innerHTML = "💔 maybe another time... still here for you 💔";
+        checkbox.innerHTML = '🌙💔';
+        checkbox.style.background = '#d4c4c9';
+      } else {
+        currentAnswer = null;
+        answerDiv.innerHTML = `💭 waiting for your answer... drag & drop your choice 💭`;
+        updateStickmanMood("happy");
+        document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
+        checkbox.innerHTML = '🎬';
+        checkbox.style.background = 'white';
+        checkbox.style.color = '#b14b5c';
+      }
+    }
+
+    function resetDecision() {
+      localStorage.removeItem(STORAGE_KEY);
+      currentAnswer = null;
+      displayPersistentAnswer();
+      updateStickmanMood("happy");
+      document.getElementById('signMessage').innerHTML = "✨ drag YES or NO to the picture box ✨";
+      showToast("✨ answer reset! you can choose again ✨");
+      canvasConfetti({ particleCount: 70, spread: 55, origin: { y: 0.8 }, colors: ['#ffd966'] });
+    }
+
+    // ---------- DRAG AND DROP WITH FULL DROP ZONE SUPPORT ----------
+    function setupDragDrop() {
+      const dragYes = document.getElementById('dragYes');
+      const dragNo = document.getElementById('dragNo');
+      const dropZone = document.getElementById('dropZone');
+
+      // Desktop drag events
+      dragYes.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', 'yes');
+        e.dataTransfer.effectAllowed = 'copy';
+        dragYes.classList.add('dragging');
+        gsap.to(dragYes, { scale: 0.95, duration: 0.1 });
+      });
+
+      dragNo.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', 'no');
+        e.dataTransfer.effectAllowed = 'copy';
+        dragNo.classList.add('dragging');
+        gsap.to(dragNo, { scale: 0.95, duration: 0.1 });
+      });
+
+      dragYes.addEventListener('dragend', () => {
+        dragYes.classList.remove('dragging');
+        gsap.to(dragYes, { scale: 1, duration: 0.2 });
+      });
+
+      dragNo.addEventListener('dragend', () => {
+        dragNo.classList.remove('dragging');
+        gsap.to(dragNo, { scale: 1, duration: 0.2 });
+      });
+
+      // Make the ENTIRE drop zone receptive (including inner box)
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('drag-over');
+        gsap.to(dropZone, { scale: 1.02, duration: 0.1 });
+      });
+
+      dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        gsap.to(dropZone, { scale: 1, duration: 0.1 });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('drag-over');
+        const choice = e.dataTransfer.getData('text/plain');
+        if (currentAnswer !== null) {
+          showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+          return;
+        }
+        if (choice === 'yes') {
+          gsap.to(dropZone, {
+            scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+              saveDecision('yes', { clientX: e.clientX, clientY: e.clientY });
+            }
+          });
+        } else if (choice === 'no') {
+          gsap.to(dropZone, {
+            scale: 1.08, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+              saveDecision('no', { clientX: e.clientX, clientY: e.clientY });
+            }
+          });
+        }
+      });
+
+      // MOBILE: Enhanced touch drag with clone and full drop zone detection
+      let draggedItem = null;
+      let cloneElement = null;
+      let startX, startY;
+      const dragCards = [dragYes, dragNo];
+
+      dragCards.forEach(card => {
+        card.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          draggedItem = card;
+          const touch = e.touches[0];
+          startX = touch.clientX;
+          startY = touch.clientY;
+          card.classList.add('dragging');
+
+          // Create a visual clone that follows the finger
+          cloneElement = card.cloneNode(true);
+          cloneElement.classList.add('drag-clone');
+          cloneElement.style.position = 'fixed';
+          cloneElement.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
+          cloneElement.style.top = (touch.clientY - card.offsetHeight / 2) + 'px';
+          cloneElement.style.width = card.offsetWidth + 'px';
+          cloneElement.style.opacity = '0.9';
+          cloneElement.style.pointerEvents = 'none';
+          document.body.appendChild(cloneElement);
+
+          gsap.to(card, { scale: 0.9, duration: 0.1 });
+        });
+
+        card.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!draggedItem) return;
+          const touch = e.touches[0];
+
+          // Move clone with finger
+          if (cloneElement) {
+            cloneElement.style.left = (touch.clientX - cloneElement.offsetWidth / 2) + 'px';
+            cloneElement.style.top = (touch.clientY - cloneElement.offsetHeight / 2) + 'px';
+          }
+
+          // Check if over drop zone (using document.elementFromPoint for the entire drop zone)
+          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+          let isOverDropZone = false;
+          let currentElem = elemBelow;
+          while (currentElem) {
+            if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
+              isOverDropZone = true;
+              break;
+            }
+            currentElem = currentElem.parentElement;
+          }
+
+          if (isOverDropZone) {
+            dropZone.classList.add('drag-over');
+            gsap.to(dropZone, { scale: 1.02, duration: 0.1 });
+          } else {
+            dropZone.classList.remove('drag-over');
+            gsap.to(dropZone, { scale: 1, duration: 0.1 });
+          }
+        });
+
+        card.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!draggedItem) return;
+
+          const touch = e.changedTouches[0];
+          draggedItem.classList.remove('dragging');
+          gsap.to(draggedItem, { scale: 1, duration: 0.2 });
+
+          // Remove clone
+          if (cloneElement) {
+            cloneElement.remove();
+            cloneElement = null;
+          }
+
+          // Check if drop happened on drop zone (entire area)
+          const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+          let isOverDropZone = false;
+          let currentElem = elemBelow;
+          while (currentElem) {
+            if (currentElem === dropZone || currentElem.classList?.contains('drop-zone')) {
+              isOverDropZone = true;
+              break;
+            }
+            currentElem = currentElem.parentElement;
+          }
+
+          if (isOverDropZone) {
+            if (currentAnswer !== null) {
+              showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+            } else {
+              const choice = draggedItem.getAttribute('data-choice');
+              gsap.to(dropZone, {
+                scale: 1.1, duration: 0.1, yoyo: true, repeat: 1, onComplete: () => {
+                  if (choice === 'yes') {
+                    saveDecision('yes', { clientX: touch.clientX, clientY: touch.clientY });
+                  } else if (choice === 'no') {
+                    saveDecision('no', { clientX: touch.clientX, clientY: touch.clientY });
+                  }
+                }
+              });
+            }
+          }
+
+          dropZone.classList.remove('drag-over');
+          gsap.to(dropZone, { scale: 1, duration: 0.1 });
+          draggedItem = null;
+        });
+      });
+
+      // Click on drop zone as alternative (works on both desktop and mobile)
+      dropZone.addEventListener('click', (e) => {
+        if (currentAnswer !== null) {
+          showToast("💕 Answer already saved! Use 'change my mind' to choose again 💕");
+          return;
+        }
+        gsap.to(dropZone, { scale: 1.05, duration: 0.1, yoyo: true, repeat: 1 });
+        const bubble = document.createElement('div');
+        bubble.innerHTML = `
+                <div style="background: white; border-radius: 2rem; padding: 1.2rem; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <p style="margin-bottom: 1rem; color: #b14b5c;">🍿 cinema outing with me? Sunday 6pm 🍿</p>
+                    <button id="popupYes" style="background:#ff8aa2; border:none; padding:0.5rem 1.5rem; border-radius:2rem; margin:0.3rem; color:white; font-weight:bold; cursor:pointer;">💖 YES</button>
+                    <button id="popupNo" style="background:#e9dfe2; border:none; padding:0.5rem 1.5rem; border-radius:2rem; margin:0.3rem; cursor:pointer;">🌙 maybe</button>
+                </div>
+            `;
+        bubble.style.position = 'fixed';
+        bubble.style.bottom = '30%';
+        bubble.style.left = '50%';
+        bubble.style.transform = 'translateX(-50%)';
+        bubble.style.zIndex = '10000';
+        document.body.appendChild(bubble);
+
+        document.getElementById('popupYes').onclick = () => {
+          saveDecision('yes', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+          bubble.remove();
+        };
+        document.getElementById('popupNo').onclick = () => {
+          saveDecision('no', { clientX: window.innerWidth / 2, clientY: window.innerHeight / 2 });
+          bubble.remove();
+        };
+        setTimeout(() => { if (bubble.parentNode) bubble.remove(); }, 8000);
+      });
+    }
+
+    // ---------- HELPER FUNCTIONS ----------
+    function showToast(msg) {
+      let toast = document.createElement('div');
+      toast.innerText = msg;
+      toast.style.position = 'fixed';
+      toast.style.bottom = '100px';
+      toast.style.left = '50%';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.backgroundColor = '#ffecf0';
+      toast.style.color = '#b85c70';
+      toast.style.padding = '10px 24px';
+      toast.style.borderRadius = '50px';
+      toast.style.fontSize = '0.85rem';
+      toast.style.fontWeight = '500';
+      toast.style.zIndex = '9999';
+      toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2200);
+    }
+
+    function createSpark(e) {
+      let spark = document.createElement('div');
+      spark.style.position = 'fixed';
+      spark.style.left = e.clientX + 'px';
+      spark.style.top = e.clientY + 'px';
+      spark.style.width = '12px';
+      spark.style.height = '12px';
+      spark.style.background = 'radial-gradient(circle, #ffb347, #ff6b8b)';
+      spark.style.borderRadius = '50%';
+      spark.style.pointerEvents = 'none';
+      spark.style.zIndex = '9999';
+      spark.style.animation = 'sparkFade 0.5s forwards';
+      document.body.appendChild(spark);
+      setTimeout(() => spark.remove(), 500);
+    }
+
+    const styleSpark = document.createElement('style');
+    styleSpark.textContent = `@keyframes sparkFade { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }`;
+    document.head.appendChild(styleSpark);
+
+    // ---------- SCROLL ANIMATION ----------
+    gsap.registerPlugin(ScrollTrigger);
+    function initScrollAnimations() {
+      gsap.from(".question-card", {
+        scrollTrigger: { trigger: ".question-section", start: "top 80%" },
+        opacity: 0,
+        y: 50,
+        duration: 0.8
+      });
+      gsap.from(".drag-drop-area", {
+        scrollTrigger: { trigger: ".question-section", start: "top 70%" },
+        scale: 0.95,
+        duration: 0.6
+      });
+    }
+
+    // ---------- EVENT LISTENERS ----------
+    document.getElementById('scrollIndicator').addEventListener('click', () => {
+      document.getElementById('questionSection').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('resetButton').addEventListener('click', resetDecision);
+
+    // Initialize
+    drawStickmanHead("happy");
+    createFloatingItems();
+    displayPersistentAnswer();
+    setupDragDrop();
+    initScrollAnimations();
+  </script>
+</body>
+
+</html>
